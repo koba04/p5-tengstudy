@@ -29,9 +29,10 @@ sub bench_get_master_data {
             }
         },
         'master_data_to_hash' => sub {
+            my $ids = [ map { $_->item_id } $db->search('user_item', { user_id => 1 })->all ];
+            # FIXME Iteratorリセットできない？
+            my $item_info = { map { $_->id => $_ } $db->search('item', { id => $ids})->all };
             my $iter = $db->search('user_item', { user_id => 1 });
-            my $ids = [ map { $_->id } $iter->all ];
-            my $item_info = { map { $_->id => $_ } $db->search('item', { id => $ids}) };
             while ( my $user_item = $iter->next ) {
                 my $name = $item_info->{$user_item->item_id}->name;
                 die "Can't Get Item Name" unless $name;
@@ -158,8 +159,8 @@ TengStudy is
 benchmark is
 
                       Rate  row_class_accessor master_data_to_hash
-row_class_accessor  14.1/s                  --                -94%
-master_data_to_hash  250/s               1675%                  --
+row_class_accessor  13.9/s                  --                -82%
+master_data_to_hash 76.9/s                454%                  --
 
 =head2 bench_insert
 
