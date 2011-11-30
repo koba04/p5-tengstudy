@@ -29,14 +29,17 @@ sub bench_get_master_data {
             }
         },
         'master_data_to_hash' => sub {
-            my $ids = [ map { $_->item_id } $db->search('user_item', { user_id => 1 })->all ];
-            # FIXME Iteratorリセットできない？
-            my $item_info = { map { $_->id => $_ } $db->search('item', { id => $ids})->all };
-            my $iter = $db->search('user_item', { user_id => 1 });
-            while ( my $user_item = $iter->next ) {
-                my $name = $item_info->{$user_item->item_id}->name;
+            my $user_item_iter = $db->search('user_item', { user_id => 1 });
+            my $item_ids = [];
+            while ( my $user_item = $user_item_iter->next ) {
+                push @$item_ids, $user_item->item_id;
+            }
+            my $item_iter = $db->search('item', { id => $item_ids});
+            while ( my $item = $item_iter->next ) {
+                my $name = $item->name;
                 die "Can't Get Item Name" unless $name;
             }
+            #my $item_info = { map { $_->id => $_ } $db->search('item', { id => $ids})->all };
         },
     });
     $class->db->do(q{ TRUNCATE TABLE user; });
@@ -159,8 +162,8 @@ TengStudy is
 benchmark is
 
                       Rate  row_class_accessor master_data_to_hash
-row_class_accessor  13.9/s                  --                -82%
-master_data_to_hash 76.9/s                454%                  --
+row_class_accessor  14.5/s                  --                -88%
+master_data_to_hash  125/s                762%                  --
 
 =head2 bench_insert
 
